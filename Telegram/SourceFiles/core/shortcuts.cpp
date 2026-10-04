@@ -143,6 +143,11 @@ const auto CommandByName = base::flat_map<QString, Command>{
 	{ u"archive_chat"_q                  , Command::ArchiveChat },
 	{ u"record_round"_q                  , Command::RecordRound },
 	{ u"show_admin_log"_q                , Command::ShowAdminLog },
+
+	// LADITEO: dispatched from HistoryInner, not bound as ApplicationShortcut.
+	{ u"laditeo_message_next"_q          , Command::LaditeoMessageNext },
+	{ u"laditeo_message_previous"_q      , Command::LaditeoMessagePrevious },
+	{ u"laditeo_message_react"_q         , Command::LaditeoMessageReact },
 	//
 };
 
@@ -168,6 +173,11 @@ const base::flat_map<Command, QString> &CommandNames() {
 	Command::ShowScheduled,
 	Command::ArchiveChat,
 	Command::RecordRound,
+
+	// LADITEO: keys are handled by HistoryInner so typing j/k/l still works.
+	Command::LaditeoMessageNext,
+	Command::LaditeoMessagePrevious,
+	Command::LaditeoMessageReact,
 };
 
 class Manager {

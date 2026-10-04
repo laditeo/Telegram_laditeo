@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "history/view/media/history_view_call.h"
 
 #include "lang/lang_keys.h"
@@ -48,16 +49,22 @@ Call::Call(
 , _video(call->video) {
 	const auto item = parent->data();
 	_text = Data::MediaCall::Text(item, _state, _conference, _video);
-	_status = QLocale().toString(
-		parent->dateTime().time(),
-		QLocale::ShortFormat);
+	// LADITEO: keep the duration, drop the clock time.
+	_status = Laditeo::kShowMessageTimes
+		? QLocale().toString(
+			parent->dateTime().time(),
+			QLocale::ShortFormat)
+		: QString();
 	if (_duration) {
-		_status = tr::lng_call_duration_info(
-			tr::now,
-			lt_time,
-			_status,
-			lt_duration,
-			Ui::FormatDurationWords(_duration));
+		const auto duration = Ui::FormatDurationWords(_duration);
+		_status = _status.isEmpty()
+			? duration
+			: tr::lng_call_duration_info(
+				tr::now,
+				lt_time,
+				_status,
+				lt_duration,
+				duration);
 	}
 }
 

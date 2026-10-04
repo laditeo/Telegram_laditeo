@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "history/view/media/history_view_location.h"
 
 #include "base/unixtime.h"
@@ -212,6 +213,10 @@ void Location::updateLiveStatus() {
 		} else if (const auto hours = elapsed / 3600; hours < 12) {
 			next = 3600 - (elapsed % 3600);
 			return tr::lng_live_location_hours(tr::now, lt_count, hours);
+		}
+		// LADITEO: remaining strings contain a clock time.
+		if (!Laditeo::kShowMessageTimes) {
+			return QString();
 		}
 		const auto dateFull = base::unixtime::parse(date);
 		const auto nowFull = base::unixtime::parse(now);

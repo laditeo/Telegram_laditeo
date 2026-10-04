@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "history/view/history_view_context_menu.h"
 
 #include "api/api_attached_stickers.h"
@@ -2438,6 +2439,8 @@ void AddWhenEditedForwardedAuthorActionHelper(
 		not_null<HistoryItem*> item,
 		not_null<Window::SessionController*> controller,
 		bool insertSeparator) {
+	// LADITEO: menu rows here are send/edit/forward clocks.
+	if (Laditeo::kShowMessageTimes) {
 	if (const auto forwarded = item->Get<HistoryMessageForwarded>()) {
 		if (!forwarded->story && forwarded->psaType.isEmpty()) {
 			if (insertSeparator && !menu->empty()) {
@@ -2474,6 +2477,7 @@ void AddWhenEditedForwardedAuthorActionHelper(
 			}
 		}
 	}
+	} // LADITEO kShowMessageTimes
 	if (item->canLookupMessageAuthor()) {
 		if (insertSeparator && !menu->empty()) {
 			menu->addSeparator(&st::expandedMenuSeparator);

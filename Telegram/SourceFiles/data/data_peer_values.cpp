@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "data/data_peer_values.h"
 
 #include "lang/lang_keys.h"
@@ -468,6 +469,10 @@ crl::time OnlineChangeTimeout(not_null<UserData*> user, TimeId now) {
 }
 
 QString OnlineText(Data::LastseenStatus status, TimeId now) {
+	// LADITEO: hide last seen / online presence text. Not a privacy setting.
+	if (!Laditeo::kShowLastSeen) {
+		return QString();
+	}
 	if (const auto common = OnlineTextCommon(status, now)) {
 		return *common;
 	}
@@ -501,12 +506,20 @@ QString OnlineText(not_null<UserData*> user, TimeId now) {
 	if (const auto special = OnlineTextSpecial(user)) {
 		return *special;
 	}
+	// LADITEO
+	if (!Laditeo::kShowLastSeen) {
+		return QString();
+	}
 	return OnlineText(user->lastseen(), now);
 }
 
 QString OnlineTextFull(not_null<UserData*> user, TimeId now) {
 	if (const auto special = OnlineTextSpecial(user)) {
 		return *special;
+	}
+	// LADITEO
+	if (!Laditeo::kShowLastSeen) {
+		return QString();
 	} else if (const auto common = OnlineTextCommon(user->lastseen(), now)) {
 		return *common;
 	}

@@ -92,6 +92,11 @@ enum class Command {
 	SupportScrollToCurrent,
 	SupportHistoryBack,
 	SupportHistoryForward,
+
+	// LADITEO: chat-history keyboard focus. Not a global shortcut.
+	LaditeoMessageNext,
+	LaditeoMessagePrevious,
+	LaditeoMessageReact,
 };
 
 [[maybe_unused]] constexpr auto kShowFolder = {

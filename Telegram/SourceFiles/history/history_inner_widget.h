@@ -25,6 +25,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_top_bar_widget.h"
 
 #include <QtGui/QPainterPath>
+#include <QtGui/QPainter> // LADITEO
 
 struct ClickContext;
 struct ClickHandlerContext;
@@ -260,6 +261,10 @@ public:
 	[[nodiscard]] int itemTop(const HistoryItem *item) const;
 	[[nodiscard]] int itemTop(const Element *view) const;
 	[[nodiscard]] Element *viewByItem(const HistoryItem *item) const;
+
+	// LADITEO
+	bool laditeoFocusStep(int delta);
+	bool laditeoQuickReact();
 	bool scrollToElementLocalY(
 		not_null<const Element*> view,
 		int localTop);
@@ -606,6 +611,11 @@ private:
 	int _historySkipHeight = 0;
 
 	FullMsgId _prependAnchorId;
+	// LADITEO
+	void laditeoPaintFocus(QPainter &p) const;
+	[[nodiscard]] Element *laditeoFocusedView() const;
+	void laditeoReveal(not_null<const Element*> view);
+	FullMsgId _laditeoFocusId;
 	int _prependAnchorDateHeight = 0;
 
 	std::unique_ptr<HistoryView::AboutView> _aboutView;

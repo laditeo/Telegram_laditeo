@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "media/view/media_view_overlay_widget.h"
 
 #include "apiwrap.h"
@@ -1834,7 +1835,10 @@ void OverlayWidget::updateControls() {
 		}
 		return dNow;
 	}();
-	_dateText = d.isValid() ? Ui::FormatDateTime(d) : QString();
+	// LADITEO
+	_dateText = (d.isValid() && Laditeo::kShowMessageTimes)
+		? Ui::FormatDateTime(d)
+		: QString();
 	const auto destroyAt = _message ? _message->mediaDestroyAt() : TimeId();
 	if (destroyAt > 0) {
 		const auto left = std::max(

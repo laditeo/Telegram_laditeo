@@ -2678,6 +2678,16 @@ void HistoryWidget::setupShortcuts() {
 			controller()->searchInChat(_history);
 			return true;
 		});
+		// LADITEO
+		request->check(Command::LaditeoMessageNext, 2) && request->handle([=] {
+			return _list && _list->laditeoFocusStep(1);
+		});
+		request->check(Command::LaditeoMessagePrevious, 2) && request->handle([=] {
+			return _list && _list->laditeoFocusStep(-1);
+		});
+		request->check(Command::LaditeoMessageReact, 2) && request->handle([=] {
+			return _list && _list->laditeoQuickReact();
+		});
 		request->check(Command::ShowChatMenu, 1) && request->handle([=] {
 			Window::ActivateWindow(controller());
 			_topBar->showPeerMenu();

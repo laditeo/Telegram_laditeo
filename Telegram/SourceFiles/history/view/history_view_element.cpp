@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "history/view/history_view_element.h"
 
 #include "apiwrap.h"
@@ -697,6 +698,10 @@ TextSelection ShiftItemSelection(
 }
 
 QString DateTooltipText(not_null<Element*> view) {
+	// LADITEO: the tooltip is the message send time.
+	if (!Laditeo::kShowMessageTimes) {
+		return {};
+	}
 	const auto locale = QLocale();
 	const auto format = QLocale::LongFormat;
 	const auto item = view->data();

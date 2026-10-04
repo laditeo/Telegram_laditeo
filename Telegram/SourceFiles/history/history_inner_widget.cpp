@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "core/shortcuts.h" // LADITEO
 #include "history/history_inner_widget.h"
 
 #include "api/api_polls.h"
@@ -419,6 +420,8 @@ HistoryInner::HistoryInner(
 	refreshAboutView();
 
 	setMouseTracking(true);
+	// LADITEO: click the history to focus it; compose box stays a text field.
+	setFocusPolicy(Qt::StrongFocus);
 	setAccessibleName(tr::lng_sr_message_list(tr::now));
 	Core::App().inAppKeyPressed(
 	) | rpl::on_next([=] {
@@ -1420,6 +1423,10 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
 	}
 
 	Painter p(this);
+	// LADITEO
+	const auto laditeoFocusPainter = gsl::finally([&] {
+		laditeoPaintFocus(p);
+	});
 	auto clip = e->rect();
 
 	auto context = preparePaintContext(clip);
@@ -4191,7 +4198,137 @@ Iv::RichPageBlocksSlice HistoryInner::getSelectedRichBlocks() const {
 		: HistoryItemRichBlocks(item);
 }
 
+
+// LADITEO
+Element *HistoryInner::laditeoFocusedView() const {
+	if (!_laditeoFocusId) {
+		return nullptr;
+	}
+	const auto item = session().data().message(_laditeoFocusId);
+	if (!item) {
+		return nullptr;
+	}
+	const auto view = viewByItem(item);
+	if (!view || view->data()->mainView() != view) {
+		return nullptr;
+	}
+	return view;
+}
+
+void HistoryInner::laditeoReveal(not_null<const Element*> view) {
+	const auto top = itemTop(view);
+	if (top < 0) {
+		return;
+	}
+	const auto bottom = top + view->height();
+	const auto visibleTop = _scroll->scrollTop();
+	const auto viewport = std::max(_scroll->height(), 1);
+	const auto visibleBottom = visibleTop + viewport;
+	if (top >= visibleTop && bottom <= visibleBottom) {
+		return;
+	}
+	auto target = visibleTop;
+	if (view->height() >= viewport || top < visibleTop) {
+		target = top;
+	} else {
+		target = bottom - viewport;
+	}
+	const auto max = std::max(_scroll->scrollTopMax(), 0);
+	target = std::clamp(target, 0, max);
+	// Jump. Do not use HistoryWidget::animatedScrollToY.
+	_scroll->scrollToY(target);
+}
+
+void HistoryInner::laditeoPaintFocus(QPainter &p) const {
+	const auto view = laditeoFocusedView();
+	if (!view) {
+		return;
+	}
+	const auto top = itemTop(view);
+	if (top < 0) {
+		return;
+	}
+	const auto h = view->height();
+	if (h <= 2) {
+		return;
+	}
+	p.save();
+	p.setRenderHint(QPainter::Antialiasing, true);
+	auto pen = QPen(st::msgServiceFg);
+	pen.setWidthF(1.5);
+	p.setPen(pen);
+	p.setBrush(Qt::NoBrush);
+	const auto inset = std::max(st::msgMargin.left() / 2, 4);
+	p.drawRoundedRect(
+		QRectF(inset, top + 1., width() - 2. * inset, h - 2.),
+		6.,
+		6.);
+	p.restore();
+}
+
+bool HistoryInner::laditeoFocusStep(int delta) {
+	auto view = laditeoFocusedView();
+	if (!view) {
+		const auto y = (delta < 0)
+			? std::max(_visibleAreaBottom - 1, 0)
+			: _visibleAreaTop;
+		view = findViewForPinnedTracking(y).first;
+		if (!view) {
+			return false;
+		}
+		_laditeoFocusId = view->data()->fullId();
+		laditeoReveal(view);
+		update();
+		return true;
+	}
+	auto target = (delta > 0)
+		? view->nextDisplayedInBlocks()
+		: view->previousDisplayedInBlocks();
+	while (target && !target->data()->isRegular()) {
+		target = (delta > 0)
+			? target->nextDisplayedInBlocks()
+			: target->previousDisplayedInBlocks();
+	}
+	if (!target) {
+		return true;
+	}
+	_laditeoFocusId = target->data()->fullId();
+	laditeoReveal(target);
+	update();
+	return true;
+}
+
+bool HistoryInner::laditeoQuickReact() {
+	const auto view = laditeoFocusedView();
+	if (!view) {
+		return false;
+	}
+	toggleFavoriteReaction(view);
+	return true;
+}
+
 void HistoryInner::keyPressEvent(QKeyEvent *e) {
+	// LADITEO: J/K/L only arrive here when this list, not an input, is focused.
+	if (!(e->modifiers() & (Qt::ShiftModifier
+		| Qt::ControlModifier
+		| Qt::AltModifier
+		| Qt::MetaModifier))) {
+		using Command = Shortcuts::Command;
+		const auto key = e->key();
+		const auto command = (key == Qt::Key_J)
+			? Command::LaditeoMessageNext
+			: (key == Qt::Key_K)
+			? Command::LaditeoMessagePrevious
+			: (key == Qt::Key_L)
+			? Command::LaditeoMessageReact
+			: Command::Close;
+		if (key == Qt::Key_J || key == Qt::Key_K || key == Qt::Key_L) {
+			if (Shortcuts::Launch(command)) {
+				e->accept();
+				return;
+			}
+		}
+	}
 	if (_middleClickAutoscroll.active() && e->key() == Qt::Key_Escape) {
 		_middleClickAutoscroll.stop();
 		return;

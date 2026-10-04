@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "dialogs/ui/dialogs_layout.h"
 
 #include "base/options.h"
@@ -430,6 +431,10 @@ void PaintDialogDate(
 		TimeId date,
 		QRect &rectForName,
 		const PaintContext &context) {
+	// LADITEO: chat-list clock is the last message time.
+	if (!Laditeo::kShowMessageTimes) {
+		return;
+	}
 	const auto resolved = fakeRow
 		? fakeRow->dateText(date, context.now)
 		: entry->chatListTimestampText(date, context.now);

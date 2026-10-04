@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include "laditeo/features.h" // LADITEO
 #include "history/view/history_view_bottom_info.h"
 
 #include "ui/chat/message_bubble.h"
@@ -499,12 +500,21 @@ void BottomInfo::layoutDateText() {
 		? (SchedulePeriodText(_data.scheduleRepeatPeriod) + ' ')
 		: QString();
 	const auto author = _data.author;
-	const auto prefix = !author.isEmpty() ? u", "_q : QString();
-	const auto date = editedPrimary
+	// LADITEO: drop the clock, keep edited/views/checks.
+	const auto showTime = Laditeo::kShowMessageTimes;
+	const auto clock = !showTime
+		? QString()
+		: editedPrimary
 		? FormatEditedDate(_data.date, _data.editedDate)
-		: edited + ((_data.flags & Data::Flag::ForwardedDate)
-		? Ui::FormatDateTimeSavedFrom(_data.date)
-		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
+		: ((_data.flags & Data::Flag::ForwardedDate)
+			? Ui::FormatDateTimeSavedFrom(_data.date)
+			: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
+	const auto date = editedPrimary
+		? clock
+		: (clock.isEmpty() ? edited.trimmed() : (edited + clock));
+	const auto prefix = (!author.isEmpty() && !date.isEmpty())
+		? u", "_q
+		: QString();
 	const auto afterAuthor = prefix + date;
 	const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
 	const auto authorWidth = st::msgDateFont->width(author);
